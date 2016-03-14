@@ -8,10 +8,17 @@ import java.util.Date;
 
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
+import android.content.Context;
+import android.content.IContentProvider;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.MediaMetadataRetriever;
+import android.net.Uri;
 import android.os.Build;
+import android.os.RemoteException;
+import android.provider.MediaStore.Video;
+import android.util.Log;
 
 /**
  * 作者：lixiang on 2015/12/16 10:55
@@ -82,5 +89,56 @@ public class VideoUtils {
         String data = hms.format(date);
         return data;
     }
+    
+
+	public  static Uri Uri2File2Uri(Uri videoUri,Context mContext,String realPath) {
+		String scheme = videoUri.getScheme();
+		String mPathName = null;
+		if (scheme == null) {
+			return videoUri;
+
+		}
+		if (scheme.equals("content")) {
+			String path = null;
+			Cursor c = null;
+			IContentProvider mMediaProvider = mContext.getContentResolver()
+					.acquireProvider("media");
+			String[] VIDEO_PROJECTION = new String[] { Video.Media.DATA };
+			/* get video file */
+			try {
+				c = mMediaProvider.query(null, videoUri, VIDEO_PROJECTION,
+						null, null, null, null);
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			if (c != null) {
+				try {
+					while (c.moveToNext()) {
+						path = c.getString(0);
+					}
+				} finally {
+					c.close();
+					c = null;
+				}
+			}
+			/*
+			 * if (path != null) { return Uri.fromFile(new File(path)); } else {
+			 * Log.w(TAG, "************ Uri2File2Uri failed ***************");
+			 * return videoUri; }
+			 */
+		} else if (scheme.equals("file")) {
+			if (realPath == null || realPath.trim().length() == 0) {
+				mPathName = videoUri.getPath();
+			} else {
+				mPathName = realPath;
+			}
+			Log.v("---->>>", "_2Uri___mPathName___" + mPathName);
+		}
+		Log.v("----->>>>", "00-----Uri2File2Uri-----Uri2File2Uri-----");
+		return videoUri;
+
+	}
+    
     
 }

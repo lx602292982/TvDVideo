@@ -37,19 +37,19 @@
             android:layout_height="match_parent"
             android:layout_weight="0.6"
             android:gravity="center"
+            android:paddingLeft="10dp"
             android:textColor="#fff"
-            android:textSize="20sp" />
+            android:textSize="22sp" />
 
         <TextView
             android:id="@+id/tv_size"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_marginLeft="10dp"
             android:layout_marginRight="10dp"
-            android:layout_weight="0.3"
+            android:layout_weight="0.15"
             android:gravity="center|right"
             android:textColor="#fff"
-            android:textSize="20sp" />
+            android:textSize="22sp" />
     </LinearLayout>
 
 </LinearLayout>

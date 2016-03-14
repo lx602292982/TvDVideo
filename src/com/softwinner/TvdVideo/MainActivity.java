@@ -8,23 +8,25 @@ import com.softwinner.TvdVideo.adapter.VideoAdapter;
 import com.softwinner.TvdVideo.model.FileVideo;
 import com.softwinner.TvdVideo.utils.VideoData;
 import com.softwinner.TvdVideo.utils.VideoUtils;
+import com.softwinner.TvdVideo.view.CustomToast;
 import com.softwinner.TvdVideo.view.SurfaceView;
 
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.content.DialogInterface;
-import android.graphics.Color;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnCompletionListener;
+import android.media.MediaPlayer.OnErrorListener;
 import android.media.MediaPlayer.OnPreparedListener;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.util.Log;
 import android.view.SurfaceHolder;
+import android.view.SurfaceHolder.Callback;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.AdapterView;
@@ -36,6 +38,7 @@ import android.widget.RadioGroup;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.TextView;
+import android.widget.Toast;
 
 @TargetApi(Build.VERSION_CODES.HONEYCOMB)
 public class MainActivity extends Activity implements OnClickListener {
@@ -59,6 +62,9 @@ public class MainActivity extends Activity implements OnClickListener {
 	private int currentPosition = 0;
 	private boolean PasueFlag = false;
 	private List<FileVideo> mVideo = new ArrayList<FileVideo>();
+	private String path000 = null;
+	private Uri mUrl;
+	private SurfaceHolder mSurfaceHolder;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -82,10 +88,7 @@ public class MainActivity extends Activity implements OnClickListener {
 		mMusicTotalTime = (TextView) findViewById(R.id.music_total_time);
 		mMusicCurrentTime = (TextView) findViewById(R.id.music_current_time);
 		mController = (LinearLayout) findViewById(R.id.controller);
-		// 把输送给surfaceView视频画面，直接显示在屏幕上，不要维持它自身的缓冲区
-		mSurfaceView.getHolder().setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
 		mSurfaceView.getHolder().setKeepScreenOn(true);// 使屏幕保持高亮状态
-		new VideoData(FileVideoCallback, getApplicationContext()).run();
 		mBtnSelector.check(mBtnSelector.getChildAt(0).getId());
 		mSeekBar.setOnSeekBarChangeListener(chenageSeekBar);
 		mController.getBackground().setAlpha(120);
@@ -94,25 +97,64 @@ public class MainActivity extends Activity implements OnClickListener {
 		mSpende.setOnClickListener(this);
 		mNextSong.setOnClickListener(this);
 		mPlayer = new MediaPlayer();
+		mSurfaceHolder = mSurfaceView.getHolder();
+		mSurfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
 		runnable = new Runnable() {
 			@Override
 			public void run() {
 				mhandler.sendMessage(Message.obtain(mhandler, 1));
 			}
 		};
+		mSurfaceHolder.addCallback(new Callback() {
+
+			@Override
+			public void surfaceDestroyed(SurfaceHolder holder) {
+				if (mPlayer!=null) {
+					if (mPlayer.isPlaying()) {
+						currentPosition = mPlayer.getCurrentPosition();
+						mPlayer.pause();
+					}
+				}
+			}
+
+			@Override
+			public void surfaceCreated(SurfaceHolder holder) {
+				if (getIntent().getData() != null) {
+					path000 = getIntent().getStringExtra("VideoPath000");
+					mUrl = VideoUtils.Uri2File2Uri(getIntent().getData(), getApplicationContext(), path000);
+					Log.d("----------", "path" + mUrl);
+					mVideoList.setVisibility(View.GONE);
+					logo.setVisibility(View.VISIBLE);
+					mNextSong.setEnabled(false);
+					mOnSong.setEnabled(false);
+					initData(-1, mUrl,currentPosition);
+					currentPosition = 0;
+				} else {
+					new VideoData(FileVideoCallback, getApplicationContext()).run();
+				}
+			}
+
+			@Override
+			public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+				// TODO Auto-generated method stub
+
+			}
+		});
 	}
 
 	private Handler mhandler = new Handler() {
 		public void handleMessage(Message msg) {
 			if (msg.what == 1) {
-				final int max = mPlayer.getDuration();
-				mSeekBar.setMax(max);
-				mMusicTotalTime.setText(VideoUtils.getTime(max));
-				if (mPlayer != null && mPlayer.isPlaying()) {
-					currentPosition = mPlayer.getCurrentPosition();
-					mMusicCurrentTime.setText(VideoUtils.getTime(currentPosition));
-					mSeekBar.setProgress(currentPosition);
-					mSeekBarSyncHandler.postDelayed(runnable, 1000);
+				if (mPlayer != null) {
+					final int max = mPlayer.getDuration();
+					mSeekBar.setMax(max);
+					mMusicTotalTime.setText(VideoUtils.getTime(max));
+					if (mPlayer != null && mPlayer.isPlaying()) {
+						currentPosition = mPlayer.getCurrentPosition();
+						mMusicCurrentTime.setText(VideoUtils.getTime(currentPosition));
+						mSeekBar.setProgress(currentPosition);
+						mSeekBarSyncHandler.postDelayed(runnable, 1000);
+					}
 				}
 			}
 		};
@@ -126,8 +168,6 @@ public class MainActivity extends Activity implements OnClickListener {
 			currentPosition = seekBar.getProgress();
 			if (mPlayer != null) {
 				mPlayer.seekTo(progress);
-				int value = progress * mPlayer.getDuration() / seekBar.getMax();
-				mMusicCurrentTime.setText(VideoUtils.getTime(value));
 			}
 		}
 
@@ -138,7 +178,7 @@ public class MainActivity extends Activity implements OnClickListener {
 
 		@Override
 		public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-
+			mMusicCurrentTime.setText(VideoUtils.getTime(progress));
 		}
 	};
 
@@ -159,13 +199,19 @@ public class MainActivity extends Activity implements OnClickListener {
 			public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 				mPosition = position;
 				mSpende.setVisibility(View.GONE);
-				initData(position);
+				if (PasueFlag == true) {
+					PasueFlag = false;
+					mSpende.setVisibility(View.GONE);
+				}
+				initData(position, null,currentPosition);
 			}
 		});
 	}
 
-	private void initData(int position) {
-		adapter.setPositionSelector(mPosition);
+	private void initData(int position, Uri path, int currentPosition) {
+		if (position != -1) {
+			adapter.setPositionSelector(position);
+		}
 		if (PasueFlag) {
 			if (mPlayer != null) {
 				mPlayer.seekTo(currentPosition);
@@ -174,31 +220,55 @@ public class MainActivity extends Activity implements OnClickListener {
 			}
 			PasueFlag = false;
 		} else {
-			if (mVideo.size() != 0) {
-				mPlayer.reset();
-				try {
+			try {
+				if (mPlayer != null) {
+					mPlayer.reset();
 					mPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-					mPlayer.setDataSource(mVideo.get(position).getUrl());
-					mPlayer.setOnPreparedListener(MediaPlayerPreparedListener);
+					mPlayer.setDisplay(mSurfaceHolder);
+					if (position != -1) {
+						if (mVideo.size() != 0) {
+							Log.d("mplayer", mVideo.get(position).getUrl());
+							mPlayer.setDataSource(mVideo.get(position).getUrl());
+
+							mPlayer.setOnCompletionListener(MediaPlayerCompletionListener);
+						}
+					} else {
+						mPlayer.setDataSource(getApplicationContext(), Uri.parse(mUrl.getPath().replace("file", "")));
+						mPlayer.setLooping(true);
+					}
+					mPlayer.setOnPreparedListener(new MediaPlayerPreparedListener(currentPosition));
 					mPlayer.prepareAsync();
-					mPlayer.setOnCompletionListener(MediaPlayerCompletionListener);
-				} catch (IOException e) {
-					e.printStackTrace();
 				}
+			} catch (IOException e) {
+				CustomToast.show(getApplicationContext(), "无法播放此视频");
+				e.printStackTrace();
 			}
 		}
-	}
 
-	MediaPlayer.OnPreparedListener MediaPlayerPreparedListener = new OnPreparedListener() {
+	}
+	private final class MediaPlayerPreparedListener implements OnPreparedListener{
+        private int position;
+         
+        public MediaPlayerPreparedListener(int position) {
+             this.position = position;
+        }
+
 		@Override
 		public void onPrepared(MediaPlayer mp) {
-			mPlayer.setDisplay(mSurfaceView.getHolder());
-			mPlayer.seekTo(0);
+			// TODO Auto-generated method stub
 			PasueFlag = false;
 			mSeekBarSyncHandler.postDelayed(runnable, 1000);
 			mPlayer.start();
+			if(position>0) mPlayer.seekTo(position);
 		}
-	};
+	}
+//
+//	MediaPlayer.OnPreparedListener MediaPlayerPreparedListener = new OnPreparedListener() {
+//		@Override
+//		public void onPrepared(MediaPlayer mp) {
+//			
+//		}
+//	};
 
 	MediaPlayer.OnCompletionListener MediaPlayerCompletionListener = new OnCompletionListener() {
 
@@ -208,32 +278,31 @@ public class MainActivity extends Activity implements OnClickListener {
 		}
 	};
 
+	/**
+	 * @deprecated TODO 回调返回sd卡视频文件
+	 */
 	public VideoData.Callback FileVideoCallback = new VideoData.Callback() {
 		@Override
 		public void onSuccess(List<FileVideo> mVideoInfo) {
 			if (mVideoInfo.size() != 0) {
-				mController.setVisibility(View.VISIBLE);
+				mVideo = mVideoInfo;
 				mVideoList.setVisibility(View.VISIBLE);
 				logo.setVisibility(View.GONE);
+				mSurfaceView.setEnabled(true);
+				mNextSong.setEnabled(true);
+				mOnSong.setEnabled(true);
 				mVideoList.setBackgroundResource(R.color.gray);
-				adapter = new VideoAdapter(MainActivity.this, mVideoInfo);
+				adapter = new VideoAdapter(MainActivity.this, mVideo);
 				mVideoList.setAdapter(adapter);
-				mVideo = mVideoInfo;
-				initData(mPosition);
+				initData(mPosition, null,currentPosition);
+				currentPosition = 0;
 			} else {
-				mController.setVisibility(View.GONE);
+				mSurfaceView.setEnabled(false);
+				mNextSong.setEnabled(false);
+				mOnSong.setEnabled(false);
 				mVideoList.setVisibility(View.GONE);
 				logo.setVisibility(View.VISIBLE);
-				mSurfaceView.setBackgroundColor(Color.parseColor("#262626"));
-				AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this, AlertDialog.THEME_TRADITIONAL);
-				builder.setTitle("提示").setCancelable(false).setMessage("没有本地视频文件")
-						.setPositiveButton("确定", new DialogInterface.OnClickListener() {
-							@Override
-							public void onClick(DialogInterface dialog, int which) {
-								dialog.cancel();
-								finish();
-							}
-						}).create().show();
+				mSurfaceView.setBackgroundResource(R.color.gray);
 			}
 		}
 	};
@@ -262,11 +331,23 @@ public class MainActivity extends Activity implements OnClickListener {
 		}
 	}
 
+	/**
+	 * TODO 播放
+	 */
 	public void setPlay() {
 		mSpende.setVisibility(View.GONE);
-		initData(mPosition);
+		if (getIntent().getData() != null) {
+			initData(-1, mUrl,currentPosition);
+			currentPosition = 0;
+		} else {
+			initData(mPosition, null,currentPosition);
+			currentPosition = 0;
+		}
 	}
 
+	/**
+	 * TODO 暂停
+	 */
 	public void setSpende() {
 		mSpende.setVisibility(View.VISIBLE);
 		if (mPlayer != null && mPlayer.isPlaying()) {
@@ -277,36 +358,50 @@ public class MainActivity extends Activity implements OnClickListener {
 		}
 	}
 
+	/**
+	 * TODO 下一个
+	 */
 	public void setOnSong() {
 		if (mPosition > 0) {
 			mPosition -= 1;
 		} else {
 			mPosition = mVideo.size() - 1;
 		}
-		if (PasueFlag==true) {
+		if (PasueFlag == true) {
 			PasueFlag = false;
 			mSpende.setVisibility(View.GONE);
 		}
-		initData(mPosition);
+		currentPosition = 0;
+		initData(mPosition, null,currentPosition);
 	}
 
+	/**
+	 * TODO 上一个
+	 */
 	public void setNextSong() {
 		if (mPosition < mVideo.size() - 1) {
 			mPosition += 1;
 		} else {
 			mPosition = 0;
 		}
-		if (PasueFlag==true) {
+		if (PasueFlag == true) {
 			PasueFlag = false;
 			mSpende.setVisibility(View.GONE);
 		}
-		initData(mPosition);
+		currentPosition = 0;
+		initData(mPosition, null,currentPosition);
 	}
+
 	@Override
 	protected void onResume() {
-		// TODO Auto-generated method stub
-		mSpende.setVisibility(View.GONE);
 		super.onResume();
+		Log.d("------>>>>>>", "onResume");
+	}
+
+	@Override
+	protected void onPause() {
+		super.onPause();
+		Log.d("------>>>>>>", "onPause");
 	}
 
 	@Override
@@ -319,5 +414,4 @@ public class MainActivity extends Activity implements OnClickListener {
 		}
 		super.onBackPressed();
 	}
-
 }
