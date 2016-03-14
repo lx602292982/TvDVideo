@@ -31,13 +31,16 @@
                 android:src="@drawable/ico_play" />
         </FrameLayout>
 
-        <TextView
+        <com.softwinner.TvdVideo.view.MarqueeTextView
             android:id="@+id/tv_title"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="0.6"
+            android:layout_weight="0.5"
+            android:ellipsize="marquee"
             android:gravity="center"
+            android:marqueeRepeatLimit="marquee_forever"
             android:paddingLeft="10dp"
+            android:singleLine="true"
             android:textColor="#fff"
             android:textSize="22sp" />
 

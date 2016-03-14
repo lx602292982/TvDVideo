@@ -53,7 +53,6 @@ public class MainActivity extends Activity implements OnClickListener {
 	private SurfaceView mSurfaceView;
 	private TextView mMusicTotalTime;
 	private TextView mMusicCurrentTime;
-	private ImageView logo;
 	private MediaPlayer mPlayer = null;
 	private Handler mSeekBarSyncHandler = new Handler();
 	private Runnable runnable;
@@ -83,7 +82,6 @@ public class MainActivity extends Activity implements OnClickListener {
 		mNextSong = (ImageView) findViewById(R.id.image_next);
 		mOnSong = (ImageView) findViewById(R.id.image_on);
 		mSeekBar = (SeekBar) findViewById(R.id.seekBar);
-		logo = (ImageView) findViewById(R.id.logo);
 		mSurfaceView = (SurfaceView) findViewById(R.id.surface);
 		mMusicTotalTime = (TextView) findViewById(R.id.music_total_time);
 		mMusicCurrentTime = (TextView) findViewById(R.id.music_current_time);
@@ -112,7 +110,7 @@ public class MainActivity extends Activity implements OnClickListener {
 				if (mPlayer!=null) {
 					if (mPlayer.isPlaying()) {
 						currentPosition = mPlayer.getCurrentPosition();
-						mPlayer.pause();
+						mPlayer.stop();
 					}
 				}
 			}
@@ -122,9 +120,7 @@ public class MainActivity extends Activity implements OnClickListener {
 				if (getIntent().getData() != null) {
 					path000 = getIntent().getStringExtra("VideoPath000");
 					mUrl = VideoUtils.Uri2File2Uri(getIntent().getData(), getApplicationContext(), path000);
-					Log.d("----------", "path" + mUrl);
 					mVideoList.setVisibility(View.GONE);
-					logo.setVisibility(View.VISIBLE);
 					mNextSong.setEnabled(false);
 					mOnSong.setEnabled(false);
 					initData(-1, mUrl,currentPosition);
@@ -136,7 +132,6 @@ public class MainActivity extends Activity implements OnClickListener {
 
 			@Override
 			public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-				// TODO Auto-generated method stub
 
 			}
 		});
@@ -287,7 +282,6 @@ public class MainActivity extends Activity implements OnClickListener {
 			if (mVideoInfo.size() != 0) {
 				mVideo = mVideoInfo;
 				mVideoList.setVisibility(View.VISIBLE);
-				logo.setVisibility(View.GONE);
 				mSurfaceView.setEnabled(true);
 				mNextSong.setEnabled(true);
 				mOnSong.setEnabled(true);
@@ -301,7 +295,6 @@ public class MainActivity extends Activity implements OnClickListener {
 				mNextSong.setEnabled(false);
 				mOnSong.setEnabled(false);
 				mVideoList.setVisibility(View.GONE);
-				logo.setVisibility(View.VISIBLE);
 				mSurfaceView.setBackgroundResource(R.color.gray);
 			}
 		}
@@ -392,17 +385,17 @@ public class MainActivity extends Activity implements OnClickListener {
 		initData(mPosition, null,currentPosition);
 	}
 
-	@Override
-	protected void onResume() {
-		super.onResume();
-		Log.d("------>>>>>>", "onResume");
-	}
-
-	@Override
-	protected void onPause() {
-		super.onPause();
-		Log.d("------>>>>>>", "onPause");
-	}
+//	@Override
+//	protected void onResume() {
+//		super.onResume();
+//		Log.d("------>>>>>>", "onResume");
+//	}
+//
+//	@Override
+//	protected void onPause() {
+//		super.onPause();
+//		Log.d("------>>>>>>", "onPause");
+//	}
 
 	@Override
 	public void onBackPressed() {

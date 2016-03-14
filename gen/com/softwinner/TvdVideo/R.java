@@ -54,18 +54,17 @@ public final class R {
         public static final int fl_main=0x7f090000;
         public static final int image_next=0x7f090004;
         public static final int image_on=0x7f090009;
-        public static final int image_play=0x7f090010;
+        public static final int image_play=0x7f09000f;
         public static final int image_spende=0x7f090002;
-        public static final int iv_video=0x7f09000f;
-        public static final int logo=0x7f09000d;
-        public static final int main=0x7f09000e;
+        public static final int iv_video=0x7f09000e;
+        public static final int main=0x7f09000d;
         public static final int music_current_time=0x7f090006;
         public static final int music_total_time=0x7f090007;
         public static final int seekBar=0x7f090008;
         public static final int surface=0x7f090001;
         public static final int swipe_list=0x7f09000c;
-        public static final int tv_size=0x7f090012;
-        public static final int tv_title=0x7f090011;
+        public static final int tv_size=0x7f090011;
+        public static final int tv_title=0x7f090010;
         public static final int video_list=0x7f09000b;
     }
     public static final class layout {
