@@ -100,6 +100,7 @@ public class MainActivity extends Activity implements OnClickListener {
 		mOnSong.setOnClickListener(this);
 		mSpende.setOnClickListener(this);
 		mNextSong.setOnClickListener(this);
+		mController.setOnClickListener(this);
 		mImage.setOnClickListener(this);
 		mPlayer = new MediaPlayer();
 		// 把输送给surfaceView视频画面，直接显示在屏幕上，不要维持它自身的缓冲区
@@ -119,7 +120,7 @@ public class MainActivity extends Activity implements OnClickListener {
 				if (mPlayer != null) {
 					if (mPlayer.isPlaying()) {
 						currentPosition = mPlayer.getCurrentPosition();
-						mPlayer.stop();
+						mPlayer.pause();
 					}
 				}
 			}
@@ -215,28 +216,30 @@ public class MainActivity extends Activity implements OnClickListener {
 	}
 
 	private void initData(int position, Uri path, int currentPosition) {
-		setImageView(false);
+		if (mSurfaceView.getVisibility() != 0) {
+			setImageView(false);
+		}
 		if (position != -1) {
 			adapter.setPositionSelector(position);
 		}
 		if (PasueFlag) {
 			if (mPlayer != null) {
+				mPlayer.setDisplay(mSurfaceHolder);
 				mPlayer.seekTo(currentPosition);
-				mSeekBarSyncHandler.postDelayed(runnable, 1000);
 				mPlayer.start();
+				mSeekBarSyncHandler.postDelayed(runnable, 1000);
 			}
 			PasueFlag = false;
 		} else {
 			try {
+				mPlayer.reset();
 				if (mPlayer != null) {
-					mPlayer.reset();
 					mPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
 					mPlayer.setDisplay(mSurfaceHolder);
 					if (position != -1) {
 						if (mVideo.size() != 0) {
 							Log.d("mplayer", mVideo.get(position).getUrl());
 							mPlayer.setDataSource(mVideo.get(position).getUrl());
-
 							mPlayer.setOnCompletionListener(MediaPlayerCompletionListener);
 						}
 					} else {
@@ -263,12 +266,11 @@ public class MainActivity extends Activity implements OnClickListener {
 
 		@Override
 		public void onPrepared(MediaPlayer mp) {
-			// TODO Auto-generated method stub
 			PasueFlag = false;
-			mSeekBarSyncHandler.postDelayed(runnable, 1000);
 			mPlayer.start();
 			if (position > 0)
 				mPlayer.seekTo(position);
+			mSeekBarSyncHandler.postDelayed(runnable, 1000);
 		}
 	}
 
@@ -295,10 +297,6 @@ public class MainActivity extends Activity implements OnClickListener {
 				mVideoList.setBackgroundResource(R.color.gray);
 				adapter = new VideoAdapter(MainActivity.this, mVideo);
 				mVideoList.setAdapter(adapter);
-				// if (PasueFlag == true) {
-				// PasueFlag = false;
-				// mSpende.setVisibility(View.GONE);
-				// }
 				initData(mPosition, null, currentPosition);
 				currentPosition = 0;
 			} else {
@@ -319,7 +317,7 @@ public class MainActivity extends Activity implements OnClickListener {
 			break;
 		case R.id.surface:
 			if (PasueFlag == false) {
-				setImageView(true);
+				// setImageView(true);
 				setSpende();
 			} else {
 				setPlay();
@@ -346,16 +344,8 @@ public class MainActivity extends Activity implements OnClickListener {
 		mSpende.setVisibility(View.GONE);
 		if (getIntent().getData() != null) {
 			initData(-1, mUrl, currentPosition);
-//			currentPosition = 0;
 		} else {
-			if (PasueFlag == true) {
-				PasueFlag = false;
-				initData(mPosition, null, currentPosition);
-//				currentPosition = 0;
-			} else {
-				initData(mPosition, null, currentPosition);
-//				currentPosition = 0;
-			}
+			initData(mPosition, null, currentPosition);
 		}
 	}
 
@@ -368,14 +358,15 @@ public class MainActivity extends Activity implements OnClickListener {
 			currentPosition = mPlayer.getCurrentPosition();
 			mSeekBarSyncHandler.removeCallbacks(runnable);
 			mPlayer.pause();
+			setImageView(true);
 			PasueFlag = true;
 		}
 	}
 
-	private void setImageView(boolean isStatus) {
+	private void setImageView(final boolean isStatus) {
 		mImage.setImageBitmap(VideoUtils.setVideoImage(mVideo.get(mPosition).getUrl(), currentPosition));
-	    mImage.setVisibility(isStatus ? View.VISIBLE : View.GONE);
-	    mSurfaceView.setVisibility(isStatus ? View.GONE : View.VISIBLE);
+		mImage.setVisibility(isStatus ? View.VISIBLE : View.GONE);
+		mSurfaceView.setVisibility(isStatus ? View.GONE : View.VISIBLE);
 	}
 
 	/**
@@ -417,7 +408,6 @@ public class MainActivity extends Activity implements OnClickListener {
 		VideoUtils.getStatus(MainActivity.this);
 		super.onResume();
 	}
-	
 
 	@Override
 	public void onBackPressed() {
