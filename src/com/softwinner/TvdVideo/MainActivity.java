@@ -6,6 +6,7 @@ import java.util.List;
 
 import com.softwinner.TvdVideo.adapter.VideoAdapter;
 import com.softwinner.TvdVideo.model.FileVideo;
+import com.softwinner.TvdVideo.utils.PreferencesUtils;
 import com.softwinner.TvdVideo.utils.VideoData;
 import com.softwinner.TvdVideo.utils.VideoUtils;
 import com.softwinner.TvdVideo.view.CustomToast;
@@ -14,10 +15,10 @@ import com.softwinner.TvdVideo.view.SurfaceView;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnCompletionListener;
-import android.media.MediaPlayer.OnErrorListener;
 import android.media.MediaPlayer.OnPreparedListener;
 import android.net.Uri;
 import android.os.Build;
@@ -38,7 +39,6 @@ import android.widget.RadioGroup;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.TextView;
-import android.widget.Toast;
 
 @TargetApi(Build.VERSION_CODES.HONEYCOMB)
 public class MainActivity extends Activity implements OnClickListener {
@@ -69,6 +69,7 @@ public class MainActivity extends Activity implements OnClickListener {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
+		VideoUtils.getBootStatus(MainActivity.this);
 		initView();
 		registerListener();
 	}
@@ -107,7 +108,7 @@ public class MainActivity extends Activity implements OnClickListener {
 
 			@Override
 			public void surfaceDestroyed(SurfaceHolder holder) {
-				if (mPlayer!=null) {
+				if (mPlayer != null) {
 					if (mPlayer.isPlaying()) {
 						currentPosition = mPlayer.getCurrentPosition();
 						mPlayer.stop();
@@ -123,7 +124,7 @@ public class MainActivity extends Activity implements OnClickListener {
 					mVideoList.setVisibility(View.GONE);
 					mNextSong.setEnabled(false);
 					mOnSong.setEnabled(false);
-					initData(-1, mUrl,currentPosition);
+					initData(-1, mUrl, currentPosition);
 					currentPosition = 0;
 				} else {
 					new VideoData(FileVideoCallback, getApplicationContext()).run();
@@ -198,7 +199,7 @@ public class MainActivity extends Activity implements OnClickListener {
 					PasueFlag = false;
 					mSpende.setVisibility(View.GONE);
 				}
-				initData(position, null,currentPosition);
+				initData(position, null, currentPosition);
 			}
 		});
 	}
@@ -241,12 +242,13 @@ public class MainActivity extends Activity implements OnClickListener {
 		}
 
 	}
-	private final class MediaPlayerPreparedListener implements OnPreparedListener{
-        private int position;
-         
-        public MediaPlayerPreparedListener(int position) {
-             this.position = position;
-        }
+
+	private final class MediaPlayerPreparedListener implements OnPreparedListener {
+		private int position;
+
+		public MediaPlayerPreparedListener(int position) {
+			this.position = position;
+		}
 
 		@Override
 		public void onPrepared(MediaPlayer mp) {
@@ -254,16 +256,18 @@ public class MainActivity extends Activity implements OnClickListener {
 			PasueFlag = false;
 			mSeekBarSyncHandler.postDelayed(runnable, 1000);
 			mPlayer.start();
-			if(position>0) mPlayer.seekTo(position);
+			if (position > 0)
+				mPlayer.seekTo(position);
 		}
 	}
-//
-//	MediaPlayer.OnPreparedListener MediaPlayerPreparedListener = new OnPreparedListener() {
-//		@Override
-//		public void onPrepared(MediaPlayer mp) {
-//			
-//		}
-//	};
+	//
+	// MediaPlayer.OnPreparedListener MediaPlayerPreparedListener = new
+	// OnPreparedListener() {
+	// @Override
+	// public void onPrepared(MediaPlayer mp) {
+	//
+	// }
+	// };
 
 	MediaPlayer.OnCompletionListener MediaPlayerCompletionListener = new OnCompletionListener() {
 
@@ -288,7 +292,7 @@ public class MainActivity extends Activity implements OnClickListener {
 				mVideoList.setBackgroundResource(R.color.gray);
 				adapter = new VideoAdapter(MainActivity.this, mVideo);
 				mVideoList.setAdapter(adapter);
-				initData(mPosition, null,currentPosition);
+				initData(mPosition, null, currentPosition);
 				currentPosition = 0;
 			} else {
 				mSurfaceView.setEnabled(false);
@@ -330,10 +334,10 @@ public class MainActivity extends Activity implements OnClickListener {
 	public void setPlay() {
 		mSpende.setVisibility(View.GONE);
 		if (getIntent().getData() != null) {
-			initData(-1, mUrl,currentPosition);
+			initData(-1, mUrl, currentPosition);
 			currentPosition = 0;
 		} else {
-			initData(mPosition, null,currentPosition);
+			initData(mPosition, null, currentPosition);
 			currentPosition = 0;
 		}
 	}
@@ -365,7 +369,7 @@ public class MainActivity extends Activity implements OnClickListener {
 			mSpende.setVisibility(View.GONE);
 		}
 		currentPosition = 0;
-		initData(mPosition, null,currentPosition);
+		initData(mPosition, null, currentPosition);
 	}
 
 	/**
@@ -382,20 +386,21 @@ public class MainActivity extends Activity implements OnClickListener {
 			mSpende.setVisibility(View.GONE);
 		}
 		currentPosition = 0;
-		initData(mPosition, null,currentPosition);
+		initData(mPosition, null, currentPosition);
 	}
 
-//	@Override
-//	protected void onResume() {
-//		super.onResume();
-//		Log.d("------>>>>>>", "onResume");
-//	}
-//
-//	@Override
-//	protected void onPause() {
-//		super.onPause();
-//		Log.d("------>>>>>>", "onPause");
-//	}
+	@Override
+	protected void onResume() {
+		VideoUtils.getStatus(MainActivity.this);
+		super.onResume();
+		Log.d("------>>>>>>", "onResume");
+	}
+	//
+	// @Override
+	// protected void onPause() {
+	// super.onPause();
+	// Log.d("------>>>>>>", "onPause");
+	// }
 
 	@Override
 	public void onBackPressed() {
@@ -405,6 +410,7 @@ public class MainActivity extends Activity implements OnClickListener {
 			mPlayer.release();
 			mPlayer = null;
 		}
+		VideoUtils.setExitSettingStatus(MainActivity.this);
 		super.onBackPressed();
 	}
 }
