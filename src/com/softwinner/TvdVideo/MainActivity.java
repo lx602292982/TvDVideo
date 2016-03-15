@@ -6,7 +6,6 @@ import java.util.List;
 
 import com.softwinner.TvdVideo.adapter.VideoAdapter;
 import com.softwinner.TvdVideo.model.FileVideo;
-import com.softwinner.TvdVideo.utils.PreferencesUtils;
 import com.softwinner.TvdVideo.utils.VideoData;
 import com.softwinner.TvdVideo.utils.VideoUtils;
 import com.softwinner.TvdVideo.view.CustomToast;
@@ -15,7 +14,7 @@ import com.softwinner.TvdVideo.view.SurfaceView;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
-import android.app.ActivityManager;
+import android.graphics.Canvas;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnCompletionListener;
@@ -30,6 +29,8 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceHolder.Callback;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ImageView;
@@ -64,10 +65,13 @@ public class MainActivity extends Activity implements OnClickListener {
 	private String path000 = null;
 	private Uri mUrl;
 	private SurfaceHolder mSurfaceHolder;
+	private ImageView mImage;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		requestWindowFeature(Window.FEATURE_NO_TITLE);// 隐藏标题栏
+		getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);// 隐藏状态栏
 		setContentView(R.layout.activity_main);
 		VideoUtils.getBootStatus(MainActivity.this);
 		initView();
@@ -87,6 +91,7 @@ public class MainActivity extends Activity implements OnClickListener {
 		mMusicTotalTime = (TextView) findViewById(R.id.music_total_time);
 		mMusicCurrentTime = (TextView) findViewById(R.id.music_current_time);
 		mController = (LinearLayout) findViewById(R.id.controller);
+		mImage = (ImageView) findViewById(R.id.image_bj);
 		mSurfaceView.getHolder().setKeepScreenOn(true);// 使屏幕保持高亮状态
 		mBtnSelector.check(mBtnSelector.getChildAt(0).getId());
 		mSeekBar.setOnSeekBarChangeListener(chenageSeekBar);
@@ -95,9 +100,12 @@ public class MainActivity extends Activity implements OnClickListener {
 		mOnSong.setOnClickListener(this);
 		mSpende.setOnClickListener(this);
 		mNextSong.setOnClickListener(this);
+		mImage.setOnClickListener(this);
 		mPlayer = new MediaPlayer();
+		// 把输送给surfaceView视频画面，直接显示在屏幕上，不要维持它自身的缓冲区
+		mSurfaceView.getHolder().setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+		mSurfaceView.getHolder().setKeepScreenOn(true);// 使屏幕保持高亮状态
 		mSurfaceHolder = mSurfaceView.getHolder();
-		mSurfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
 		runnable = new Runnable() {
 			@Override
 			public void run() {
@@ -118,16 +126,18 @@ public class MainActivity extends Activity implements OnClickListener {
 
 			@Override
 			public void surfaceCreated(SurfaceHolder holder) {
-				if (getIntent().getData() != null) {
-					path000 = getIntent().getStringExtra("VideoPath000");
-					mUrl = VideoUtils.Uri2File2Uri(getIntent().getData(), getApplicationContext(), path000);
-					mVideoList.setVisibility(View.GONE);
-					mNextSong.setEnabled(false);
-					mOnSong.setEnabled(false);
-					initData(-1, mUrl, currentPosition);
-					currentPosition = 0;
-				} else {
-					new VideoData(FileVideoCallback, getApplicationContext()).run();
+				if (!PasueFlag) {
+					if (getIntent().getData() != null) {
+						path000 = getIntent().getStringExtra("VideoPath000");
+						mUrl = VideoUtils.Uri2File2Uri(getIntent().getData(), getApplicationContext(), path000);
+						mVideoList.setVisibility(View.GONE);
+						mNextSong.setEnabled(false);
+						mOnSong.setEnabled(false);
+						initData(-1, mUrl, currentPosition);
+						currentPosition = 0;
+					} else {
+						new VideoData(FileVideoCallback, getApplicationContext()).run();
+					}
 				}
 			}
 
@@ -205,6 +215,7 @@ public class MainActivity extends Activity implements OnClickListener {
 	}
 
 	private void initData(int position, Uri path, int currentPosition) {
+		setImageView(false);
 		if (position != -1) {
 			adapter.setPositionSelector(position);
 		}
@@ -260,14 +271,6 @@ public class MainActivity extends Activity implements OnClickListener {
 				mPlayer.seekTo(position);
 		}
 	}
-	//
-	// MediaPlayer.OnPreparedListener MediaPlayerPreparedListener = new
-	// OnPreparedListener() {
-	// @Override
-	// public void onPrepared(MediaPlayer mp) {
-	//
-	// }
-	// };
 
 	MediaPlayer.OnCompletionListener MediaPlayerCompletionListener = new OnCompletionListener() {
 
@@ -292,6 +295,10 @@ public class MainActivity extends Activity implements OnClickListener {
 				mVideoList.setBackgroundResource(R.color.gray);
 				adapter = new VideoAdapter(MainActivity.this, mVideo);
 				mVideoList.setAdapter(adapter);
+				// if (PasueFlag == true) {
+				// PasueFlag = false;
+				// mSpende.setVisibility(View.GONE);
+				// }
 				initData(mPosition, null, currentPosition);
 				currentPosition = 0;
 			} else {
@@ -312,10 +319,14 @@ public class MainActivity extends Activity implements OnClickListener {
 			break;
 		case R.id.surface:
 			if (PasueFlag == false) {
+				setImageView(true);
 				setSpende();
 			} else {
 				setPlay();
 			}
+			break;
+		case R.id.image_bj:
+			setPlay();
 			break;
 		case R.id.image_next:
 			setOnSong();
@@ -335,10 +346,16 @@ public class MainActivity extends Activity implements OnClickListener {
 		mSpende.setVisibility(View.GONE);
 		if (getIntent().getData() != null) {
 			initData(-1, mUrl, currentPosition);
-			currentPosition = 0;
+//			currentPosition = 0;
 		} else {
-			initData(mPosition, null, currentPosition);
-			currentPosition = 0;
+			if (PasueFlag == true) {
+				PasueFlag = false;
+				initData(mPosition, null, currentPosition);
+//				currentPosition = 0;
+			} else {
+				initData(mPosition, null, currentPosition);
+//				currentPosition = 0;
+			}
 		}
 	}
 
@@ -353,6 +370,12 @@ public class MainActivity extends Activity implements OnClickListener {
 			mPlayer.pause();
 			PasueFlag = true;
 		}
+	}
+
+	private void setImageView(boolean isStatus) {
+		mImage.setImageBitmap(VideoUtils.setVideoImage(mVideo.get(mPosition).getUrl(), currentPosition));
+	    mImage.setVisibility(isStatus ? View.VISIBLE : View.GONE);
+	    mSurfaceView.setVisibility(isStatus ? View.GONE : View.VISIBLE);
 	}
 
 	/**
@@ -393,14 +416,8 @@ public class MainActivity extends Activity implements OnClickListener {
 	protected void onResume() {
 		VideoUtils.getStatus(MainActivity.this);
 		super.onResume();
-		Log.d("------>>>>>>", "onResume");
 	}
-	//
-	// @Override
-	// protected void onPause() {
-	// super.onPause();
-	// Log.d("------>>>>>>", "onPause");
-	// }
+	
 
 	@Override
 	public void onBackPressed() {

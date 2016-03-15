@@ -7,7 +7,7 @@
     <LinearLayout
         android:id="@+id/main"
         android:layout_width="match_parent"
-        android:layout_height="90dp"
+        android:layout_height="@dimen/dp_90"
         android:orientation="horizontal" >
 
         <FrameLayout
@@ -24,8 +24,8 @@
 
             <ImageView
                 android:id="@+id/image_play"
-                android:layout_width="60dp"
-                android:layout_height="60dp"
+                android:layout_width="@dimen/dp_60"
+                android:layout_height="@dimen/dp_60"
                 android:layout_gravity="center"
                 android:scaleType="centerCrop"
                 android:src="@drawable/ico_play" />
@@ -39,20 +39,20 @@
             android:ellipsize="marquee"
             android:gravity="center"
             android:marqueeRepeatLimit="marquee_forever"
-            android:paddingLeft="10dp"
+            android:paddingLeft="@dimen/dp_10"
             android:singleLine="true"
             android:textColor="#fff"
-            android:textSize="22sp" />
+            android:textSize="@dimen/sp_20" />
 
         <TextView
             android:id="@+id/tv_size"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_marginRight="10dp"
+            android:layout_marginRight="@dimen/dp_10"
             android:layout_weight="0.15"
             android:gravity="center|right"
             android:textColor="#fff"
-            android:textSize="22sp" />
+            android:textSize="@dimen/sp_20" />
     </LinearLayout>
 
 </LinearLayout>

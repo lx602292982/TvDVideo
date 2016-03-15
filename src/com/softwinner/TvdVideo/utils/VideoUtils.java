@@ -5,6 +5,8 @@ import java.io.ByteArrayOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import org.apache.http.util.LangUtils;
+
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
@@ -40,6 +42,25 @@ public class VideoUtils {
 		try {
 			media.setDataSource(filePath);
 			bitmap = media.getFrameAtTime();
+		} catch (IllegalArgumentException ex) {
+			ex.printStackTrace();
+		} catch (RuntimeException ex) {
+		} finally {
+			try {
+				media.release();
+			} catch (RuntimeException ex) {
+				ex.printStackTrace();
+			}
+		}
+		return bitmap;
+	}
+	
+	public static Bitmap setVideoImage(String filePath,int currentPosition){
+		Bitmap bitmap = null;
+		MediaMetadataRetriever media = new MediaMetadataRetriever();
+		try {
+			media.setDataSource(filePath);
+			bitmap = media.getFrameAtTime(currentPosition);
 		} catch (IllegalArgumentException ex) {
 			ex.printStackTrace();
 		} catch (RuntimeException ex) {
