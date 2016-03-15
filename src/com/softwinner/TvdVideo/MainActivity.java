@@ -317,7 +317,6 @@ public class MainActivity extends Activity implements OnClickListener {
 			break;
 		case R.id.surface:
 			if (PasueFlag == false) {
-				// setImageView(true);
 				setSpende();
 			} else {
 				setPlay();

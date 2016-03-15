@@ -4,8 +4,8 @@
     android:layout_height="match_parent"
     android:orientation="horizontal"
     tools:context="com.softwinner.TvdVideo.MainActivity" >
-
     <FrameLayout
+
         android:id="@+id/fl_main"
         android:layout_width="0dp"
         android:layout_height="match_parent"
@@ -15,13 +15,13 @@
             android:id="@+id/surface"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
-
         <ImageView
             android:id="@+id/image_bj"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:scaleType="fitXY"
             android:visibility="gone" />
+
 
         <ImageView
             android:id="@+id/image_spende"
