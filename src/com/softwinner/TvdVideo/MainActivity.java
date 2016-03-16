@@ -180,7 +180,7 @@ public class MainActivity extends Activity implements OnClickListener {
 
 		@Override
 		public void onStartTrackingTouch(SeekBar seekBar) {
-
+			
 		}
 
 		@Override
@@ -216,11 +216,12 @@ public class MainActivity extends Activity implements OnClickListener {
 	}
 
 	private void initData(int position, Uri path, int currentPosition) {
-		if (mSurfaceView.getVisibility() != 0) {
-			setImageView(false);
-		}
+//		if (mSurfaceView.getVisibility() != 0) {
+//			setImageView(false);
+//		}
 		if (position != -1) {
 			adapter.setPositionSelector(position);
+			mController.setVisibility(View.GONE);
 		}
 		if (PasueFlag) {
 			if (mPlayer != null) {
@@ -357,16 +358,17 @@ public class MainActivity extends Activity implements OnClickListener {
 			currentPosition = mPlayer.getCurrentPosition();
 			mSeekBarSyncHandler.removeCallbacks(runnable);
 			mPlayer.pause();
-			setImageView(true);
+//			setImageView(true);
 			PasueFlag = true;
+			mController.setVisibility(View.VISIBLE);
 		}
 	}
 
-	private void setImageView(final boolean isStatus) {
-		mImage.setImageBitmap(VideoUtils.setVideoImage(mVideo.get(mPosition).getUrl(), currentPosition));
-		mImage.setVisibility(isStatus ? View.VISIBLE : View.GONE);
-		mSurfaceView.setVisibility(isStatus ? View.GONE : View.VISIBLE);
-	}
+//	private void setImageView(final boolean isStatus) {
+//		mImage.setImageBitmap(VideoUtils.setVideoImage(mVideo.get(mPosition).getUrl(), currentPosition));
+//		mImage.setVisibility(isStatus ? View.VISIBLE : View.GONE);
+//		mSurfaceView.setVisibility(isStatus ? View.GONE : View.VISIBLE);
+//	}
 
 	/**
 	 * TODO 下一个
