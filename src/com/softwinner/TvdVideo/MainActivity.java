@@ -58,9 +58,11 @@ public class MainActivity extends Activity implements OnClickListener {
 	private Handler mSeekBarSyncHandler = new Handler();
 	private Runnable runnable;
 	private LinearLayout mController;
+
 	private int mPosition = 0;
 	private int currentPosition = 0;
 	private boolean PasueFlag = false;
+
 	private List<FileVideo> mVideo = new ArrayList<FileVideo>();
 	private String path000 = null;
 	private Uri mUrl;
@@ -127,7 +129,7 @@ public class MainActivity extends Activity implements OnClickListener {
 
 			@Override
 			public void surfaceCreated(SurfaceHolder holder) {
-//				if (!PasueFlag) {
+				if (!PasueFlag) {
 					if (getIntent().getData() != null) {
 						path000 = getIntent().getStringExtra("VideoPath000");
 						mUrl = VideoUtils.Uri2File2Uri(getIntent().getData(), getApplicationContext(), path000);
@@ -139,14 +141,14 @@ public class MainActivity extends Activity implements OnClickListener {
 					} else {
 						new VideoData(FileVideoCallback, getApplicationContext()).run();
 					}
-//				}
+				}
 			}
 
 			@Override
 			public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
 
 			}
-			
+
 		});
 	}
 
@@ -174,6 +176,7 @@ public class MainActivity extends Activity implements OnClickListener {
 		public void onStopTrackingTouch(SeekBar seekBar) {
 			int progress = seekBar.getProgress();
 			currentPosition = seekBar.getProgress();
+			setImageView(true);
 			if (mPlayer != null) {
 				mPlayer.seekTo(progress);
 			}
@@ -181,7 +184,7 @@ public class MainActivity extends Activity implements OnClickListener {
 
 		@Override
 		public void onStartTrackingTouch(SeekBar seekBar) {
-			
+
 		}
 
 		@Override
@@ -217,9 +220,9 @@ public class MainActivity extends Activity implements OnClickListener {
 	}
 
 	private void initData(int position, Uri path, int currentPosition) {
-//		if (mSurfaceView.getVisibility() != 0) {
-//			setImageView(false);
-//		}
+		if (mSurfaceView.getVisibility() != 0) {
+			setImageView(false);
+		}
 		if (position != -1) {
 			adapter.setPositionSelector(position);
 			mSpende.setVisibility(View.GONE);
@@ -359,17 +362,17 @@ public class MainActivity extends Activity implements OnClickListener {
 			currentPosition = mPlayer.getCurrentPosition();
 			mSeekBarSyncHandler.removeCallbacks(runnable);
 			mPlayer.pause();
-//			setImageView(true);
+			setImageView(true);
 			PasueFlag = true;
 			mController.setVisibility(View.VISIBLE);
 		}
 	}
 
-//	private void setImageView(final boolean isStatus) {
-//		mImage.setImageBitmap(VideoUtils.setVideoImage(mVideo.get(mPosition).getUrl(), currentPosition));
-//		mImage.setVisibility(isStatus ? View.VISIBLE : View.GONE);
-//		mSurfaceView.setVisibility(isStatus ? View.GONE : View.VISIBLE);
-//	}
+	private void setImageView(final boolean isStatus) {
+		mImage.setImageBitmap(VideoUtils.setVideoImage(mVideo.get(mPosition).getUrl(), currentPosition));
+		mImage.setVisibility(isStatus ? View.VISIBLE : View.GONE);
+		mSurfaceView.setVisibility(isStatus ? View.GONE : View.VISIBLE);
+	}
 
 	/**
 	 * TODO 下一个
@@ -412,13 +415,18 @@ public class MainActivity extends Activity implements OnClickListener {
 	}
 
 	@Override
-	public void onBackPressed() {
-		if (mPlayer != null) {
-			mSeekBarSyncHandler.removeCallbacks(runnable);
+	protected void onDestroy() {
+		if (mPlayer.isPlaying()) {
 			mPlayer.stop();
-			mPlayer.release();
-			mPlayer = null;
 		}
+		mSeekBarSyncHandler.removeCallbacks(runnable);
+		mPlayer.release();
+		mPlayer = null;
+		super.onDestroy();
+	}
+
+	@Override
+	public void onBackPressed() {
 		VideoUtils.setExitSettingStatus(MainActivity.this);
 		super.onBackPressed();
 	}
