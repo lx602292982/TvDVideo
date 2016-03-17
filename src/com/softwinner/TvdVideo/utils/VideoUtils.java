@@ -60,7 +60,7 @@ public class VideoUtils {
 		MediaMetadataRetriever media = new MediaMetadataRetriever();
 		try {
 			media.setDataSource(filePath);
-			bitmap = media.getFrameAtTime(currentPosition);
+			bitmap = media.getFrameAtTime(currentPosition*1000,MediaMetadataRetriever.OPTION_CLOSEST_SYNC);
 		} catch (IllegalArgumentException ex) {
 			ex.printStackTrace();
 		} catch (RuntimeException ex) {

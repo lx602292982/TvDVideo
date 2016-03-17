@@ -127,7 +127,7 @@ public class MainActivity extends Activity implements OnClickListener {
 
 			@Override
 			public void surfaceCreated(SurfaceHolder holder) {
-				if (!PasueFlag) {
+//				if (!PasueFlag) {
 					if (getIntent().getData() != null) {
 						path000 = getIntent().getStringExtra("VideoPath000");
 						mUrl = VideoUtils.Uri2File2Uri(getIntent().getData(), getApplicationContext(), path000);
@@ -139,13 +139,14 @@ public class MainActivity extends Activity implements OnClickListener {
 					} else {
 						new VideoData(FileVideoCallback, getApplicationContext()).run();
 					}
-				}
+//				}
 			}
 
 			@Override
 			public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
 
 			}
+			
 		});
 	}
 
@@ -221,6 +222,7 @@ public class MainActivity extends Activity implements OnClickListener {
 //		}
 		if (position != -1) {
 			adapter.setPositionSelector(position);
+			mSpende.setVisibility(View.GONE);
 			mController.setVisibility(View.GONE);
 		}
 		if (PasueFlag) {
@@ -341,7 +343,6 @@ public class MainActivity extends Activity implements OnClickListener {
 	 * TODO 播放
 	 */
 	public void setPlay() {
-		mSpende.setVisibility(View.GONE);
 		if (getIntent().getData() != null) {
 			initData(-1, mUrl, currentPosition);
 		} else {
